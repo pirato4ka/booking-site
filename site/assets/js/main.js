@@ -3,16 +3,7 @@
 document.documentElement.classList.remove('no-js');
 document.documentElement.classList.add('js');
 
-/* Ссылки на мессенджеры. Оставьте пустыми, если ссылки пока нет —
-   соответствующие кнопки на сайте будут скрыты. Пример:
-   telegram: "https://t.me/adam_i_eva_bot",
-   max: "https://max.ru/u/..." */
-const STUDIO_LINKS = {
-  telegram: '',
-  max: '',
-};
-
-const CATEGORIES = {
+let CATEGORIES = {
   plasma: {
     title: 'Холодная плазма',
     description: 'Аппаратная методика для работы с рубцами, растяжками, тургором и пигментацией.',
@@ -39,7 +30,7 @@ const CATEGORIES = {
   },
 };
 
-const SERVICES = [
+let SERVICES = [
   {
     cat: 'plasma',
     title: 'Шлифовка шрамов и рубцов',
@@ -439,8 +430,202 @@ const SERVICES = [
 ];
 
 /* ==========================================================================
+   Данные сайта из панели управления
+   --------------------------------------------------------------------------
+   site/assets/data/site.json публикует админка. Если файла ещё нет или он
+   недоступен, остаётся встроенный прайс выше — сайт работает как раньше.
+   ========================================================================== */
+
+const SITE_DATA_URL = 'assets/data/site.json';
+
+function setEmphasizedText(element, text) {
+  element.textContent = '';
+
+  String(text)
+    .split('*')
+    .forEach((part, index) => {
+      if (!part) {
+        return;
+      }
+
+      if (index % 2 === 1) {
+        const emphasis = document.createElement('em');
+        emphasis.textContent = part;
+        element.appendChild(emphasis);
+      } else {
+        element.appendChild(document.createTextNode(part));
+      }
+    });
+}
+
+function applySettings(settings) {
+  document.querySelectorAll('[data-site-text]').forEach((element) => {
+    const key = element.dataset.siteText;
+
+    if (!Object.prototype.hasOwnProperty.call(settings, key)) {
+      return;
+    }
+
+    const value = String(settings[key] || '');
+
+    if (element.hasAttribute('data-site-emphasis')) {
+      setEmphasizedText(element, value);
+    } else {
+      element.textContent = value;
+    }
+  });
+
+  if (settings.phone_raw) {
+    document.querySelectorAll('a[href^="tel:"]').forEach((link) => {
+      link.href = `tel:${settings.phone_raw}`;
+    });
+  }
+
+  if (settings.map_url) {
+    document.querySelectorAll('[data-site-link="map"]').forEach((link) => {
+      link.href = settings.map_url;
+    });
+  }
+
+  ['telegram', 'max', 'instagram'].forEach((name) => {
+    const url = settings[name] || '';
+
+    document.querySelectorAll(`[data-site-link="${name}"]`).forEach((link) => {
+      if (url) {
+        link.href = url;
+        link.hidden = false;
+      } else {
+        link.hidden = true;
+      }
+    });
+  });
+
+  const counters = {
+    services: SERVICES.length,
+    categories: Object.keys(CATEGORIES).length,
+    featured: SERVICES.filter((service) => service.featured).length,
+  };
+
+  document.querySelectorAll('[data-site-count]').forEach((element) => {
+    const value = counters[element.dataset.siteCount];
+
+    if (typeof value === 'number') {
+      element.textContent = String(value);
+    }
+  });
+}
+
+function buildChips(categories) {
+  const container = document.querySelector('[data-price-chips]');
+
+  if (!container || !categories.length) {
+    return;
+  }
+
+  const chips = [{ filter: 'featured', label: 'Популярное' }]
+    .concat(categories.map((category) => ({
+      filter: category.slug,
+      label: category.short || category.title,
+    })))
+    .concat([{ filter: 'all', label: `Все ${SERVICES.length}` }]);
+
+  container.innerHTML = chips
+    .map((chip) => `
+      <button class="chip" type="button" data-filter="${escapeHtml(chip.filter)}" aria-pressed="false">
+        ${escapeHtml(chip.label)}
+      </button>
+    `)
+    .join('');
+
+  priceChips = Array.from(container.querySelectorAll('[data-filter]'));
+  bindChips();
+}
+
+function applySiteData(data) {
+  if (!data || !Array.isArray(data.services) || !data.services.length) {
+    return false;
+  }
+
+  const categories = {};
+
+  (data.categories || []).forEach((category) => {
+    if (!category || !category.slug) {
+      return;
+    }
+
+    categories[category.slug] = {
+      title: category.title || category.slug,
+      description: category.description || '',
+      short: category.short || category.title || category.slug,
+    };
+  });
+
+  if (!Object.keys(categories).length) {
+    return false;
+  }
+
+  CATEGORIES = categories;
+  SERVICES = data.services.map((service) => ({
+    cat: service.category,
+    title: service.title,
+    price: service.price,
+    mode: service.mode,
+    note: service.note || '',
+    duration: service.duration,
+    description: service.description || '',
+    featured: service.featured || 0,
+  }));
+
+  if (!['featured', 'all'].includes(state.filter) && !CATEGORIES[state.filter]) {
+    state.filter = 'featured';
+  }
+
+  applySettings(data.settings || {});
+  buildChips(data.categories || []);
+  return true;
+}
+
+function bindChips() {
+  priceChips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      state.filter = chip.dataset.filter;
+      state.query = '';
+
+      if (priceSearch) {
+        priceSearch.value = '';
+      }
+
+      setActiveFilter();
+      renderServices();
+    });
+  });
+}
+
+async function loadSiteData() {
+  try {
+    const response = await fetch(`${SITE_DATA_URL}?v=${Date.now()}`, { cache: 'no-store' });
+
+    if (!response.ok) {
+      return;
+    }
+
+    const data = await response.json();
+
+    if (!applySiteData(data)) {
+      return;
+    }
+
+    setActiveFilter();
+    renderServices();
+  } catch (error) {
+    /* Файла ещё нет — работаем со встроенным прайсом. */
+  }
+}
+
+/* ==========================================================================
    Прайс
    ========================================================================== */
+
 
 const state = {
   filter: 'featured',
@@ -450,7 +635,7 @@ const state = {
 const priceGrid = document.querySelector('[data-price-grid]');
 const priceCount = document.querySelector('[data-price-count]');
 const priceSearch = document.querySelector('[data-price-search]');
-const priceChips = Array.from(document.querySelectorAll('[data-filter]'));
+let priceChips = Array.from(document.querySelectorAll('[data-filter]'));
 
 const numberFormatter = new Intl.NumberFormat('ru-RU');
 
@@ -481,15 +666,16 @@ function priceLabel(service) {
 }
 
 function serviceDescription(service) {
-  return service.description || CATEGORIES[service.cat].description;
+  return service.description || (CATEGORIES[service.cat] || {}).description || '';
 }
 
 function matchesQuery(service, query) {
+  const category = CATEGORIES[service.cat] || { title: '', description: '' };
   const haystack = [
     service.title,
     service.description || '',
-    CATEGORIES[service.cat].title,
-    CATEGORIES[service.cat].description,
+    category.title,
+    category.description,
   ].join(' ').toLowerCase();
 
   return haystack.includes(query);
@@ -535,11 +721,11 @@ function updateCount(visibleCount) {
     return;
   }
 
-  priceCount.textContent = `${CATEGORIES[state.filter].title}: ${visibleCount}`;
+  priceCount.textContent = `${(CATEGORIES[state.filter] || { title: state.filter }).title}: ${visibleCount}`;
 }
 
 function serviceCard(service) {
-  const category = CATEGORIES[service.cat];
+  const category = CATEGORIES[service.cat] || { title: '' };
   const note = service.note
     ? `<span class="service-card__note">${escapeHtml(service.note)}</span>`
     : '';
@@ -599,18 +785,6 @@ function setActiveFilter() {
    ========================================================================== */
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/* Ссылки на мессенджеры: показываем только если они заданы выше. */
-Object.entries(STUDIO_LINKS).forEach(([name, url]) => {
-  if (!url) {
-    return;
-  }
-
-  document.querySelectorAll(`[data-contact-link="${name}"]`).forEach((link) => {
-    link.href = url;
-    link.hidden = false;
-  });
-});
 
 /* Год в подвале */
 document.querySelectorAll('[data-year]').forEach((element) => {
@@ -688,7 +862,7 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-const desktopQuery = window.matchMedia('(min-width: 761px)');
+const desktopQuery = window.matchMedia('(min-width: 1025px)');
 const handleDesktopChange = (event) => {
   if (event.matches) {
     setMenu(false);
@@ -702,19 +876,7 @@ if (desktopQuery.addEventListener) {
 }
 
 /* Фильтры и поиск по прайсу */
-priceChips.forEach((chip) => {
-  chip.addEventListener('click', () => {
-    state.filter = chip.dataset.filter;
-    state.query = '';
-
-    if (priceSearch) {
-      priceSearch.value = '';
-    }
-
-    setActiveFilter();
-    renderServices();
-  });
-});
+bindChips();
 
 if (priceSearch) {
   priceSearch.addEventListener('input', (event) => {
@@ -831,6 +993,7 @@ if (!('IntersectionObserver' in window) || prefersReducedMotion) {
 
 setActiveFilter();
 renderServices();
+loadSiteData();
 
 
 

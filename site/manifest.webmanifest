@@ -1,0 +1,40 @@
+{
+  "name": "Адам и Ева — студия красоты и тела",
+  "short_name": "Адам и Ева",
+  "description": "Студия красоты и эстетики тела в Славянске-на-Кубани: холодная плазма, массаж лица, уходы, аппаратные процедуры, эпиляция и курсы для тела.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f1e8",
+  "theme_color": "#f7f1e8",
+  "categories": ["beauty", "health", "lifestyle"],
+  "icons": [
+    {
+      "src": "assets/img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/img/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

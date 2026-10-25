@@ -23,7 +23,14 @@
   --radius: 24px;
   --radius-lg: 34px;
   --container: 1180px;
-  --header-height: 78px;
+  --gutter: 24px;
+  --tap: 44px;
+  /* Вырезы, скругления и домашние индикаторы (iPhone, Android, складные) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --header-height: calc(78px + var(--safe-top));
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --font-serif: Georgia, "Times New Roman", "Cormorant Garamond", serif;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -38,11 +45,13 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--header-height) + 24px);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior-y: none;
 }
 
 body {
   margin: 0;
-  min-width: 320px;
   overflow-x: hidden;
   background: var(--bg);
   color: var(--ink);
@@ -50,6 +59,7 @@ body {
   font-size: 16px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: rgba(181, 129, 78, 0.18);
   text-rendering: optimizeLegibility;
 }
 
@@ -125,8 +135,9 @@ img {
 }
 
 .container {
-  width: min(calc(100% - 48px), var(--container));
+  width: min(calc(100% - 2 * var(--gutter)), var(--container));
   margin-inline: auto;
+  padding-inline: var(--safe-left) var(--safe-right);
 }
 
 .skip-link {
@@ -312,6 +323,7 @@ img {
   position: sticky;
   top: 0;
   z-index: 80;
+  padding-top: var(--safe-top);
   border-bottom: 1px solid transparent;
   background: rgba(247, 241, 232, 0.82);
   backdrop-filter: blur(16px);
@@ -330,7 +342,7 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 28px;
-  min-height: var(--header-height);
+  min-height: calc(var(--header-height) - var(--safe-top));
 }
 
 .logo {
@@ -1677,7 +1689,7 @@ img {
    ========================================================================== */
 
 .site-footer {
-  padding: 30px 0 36px;
+  padding: 30px 0 calc(36px + var(--safe-bottom));
 }
 
 .footer__inner {
@@ -1755,6 +1767,131 @@ img {
    Responsive
    ========================================================================== */
 
+/* Большие ноутбуки, мониторы и ТВ */
+@media (min-width: 1440px) {
+  :root {
+    --container: 1240px;
+  }
+}
+
+@media (min-width: 1800px) {
+  :root {
+    --container: 1360px;
+    --gutter: 32px;
+    --header-height: calc(84px + var(--safe-top));
+  }
+
+  .section:not(.section--tight) {
+    padding-block: 128px;
+  }
+
+  .hero {
+    padding-block: 76px 108px;
+  }
+
+  .hero h1 {
+    font-size: clamp(4.2rem, 4.4vw, 6.5rem);
+  }
+
+  .hero__lead {
+    max-width: 600px;
+    font-size: 18px;
+  }
+
+  .hero__visual {
+    max-width: 580px;
+  }
+
+  .nav__link {
+    font-size: 14px;
+  }
+
+  .about__text,
+  .contact-panel__lead {
+    font-size: 16px;
+  }
+
+  .direction-card {
+    min-height: 300px;
+    padding: 30px;
+  }
+
+  .direction-card p,
+  .process-card p,
+  .faq-item__answer {
+    font-size: 14px;
+  }
+
+  .service-card {
+    min-height: 240px;
+    padding: 24px;
+  }
+
+  .service-card__desc {
+    font-size: 13px;
+  }
+
+  .price-grid {
+    gap: 18px;
+  }
+
+  .faq-item summary {
+    padding-block: 25px;
+  }
+
+  .contact-panel {
+    padding: 72px;
+  }
+}
+
+/* 4K-мониторы и ТВ: крупнее типографика, шире полотно */
+@media (min-width: 2200px) {
+  :root {
+    --container: 1480px;
+  }
+
+  body {
+    font-size: 18px;
+  }
+
+  .hero h1 {
+    font-size: clamp(4.6rem, 4vw, 7rem);
+  }
+
+  .hero__lead,
+  .about__text,
+  .contact-panel__lead {
+    font-size: 20px;
+  }
+
+  .direction-card p,
+  .process-card p,
+  .faq-item__answer {
+    font-size: 16px;
+  }
+
+  .direction-card h3 {
+    font-size: clamp(1.7rem, 1.6vw, 2.1rem);
+  }
+
+  .service-card h3 {
+    font-size: 1.4rem;
+  }
+
+  .service-card__desc {
+    font-size: 14px;
+  }
+
+  .chip {
+    padding: 11px 18px;
+    font-size: 12px;
+  }
+
+  .nav__link {
+    font-size: 15px;
+  }
+}
+
 @media (max-width: 1120px) {
   .header__phone {
     display: none;
@@ -1771,6 +1908,111 @@ img {
 
   .hero__note--bottom {
     right: -3%;
+  }
+}
+
+/* Ноутбуки 1121–1359 px: подпись не должна прятаться за краем обложки */
+@media (min-width: 1121px) and (max-width: 1359px) {
+  .hero__note--bottom {
+    right: 0;
+  }
+}
+
+/* Планшеты (портрет) и небольшие ноутбуки: навигация уходит в выпадающее меню */
+@media (max-width: 1024px) {
+  /* blur создаёт containing block для position: fixed — на планшетах/телефонах
+     отключаем его, чтобы меню позиционировалось от viewport */
+  .site-header {
+    background: rgba(247, 241, 232, 0.97);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .nav-toggle {
+    display: block;
+  }
+
+  .nav {
+    position: fixed;
+    top: calc(var(--header-height) + 8px);
+    right: max(16px, var(--safe-right));
+    left: auto;
+    z-index: 75;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    width: min(380px, calc(100vw - 32px - var(--safe-left) - var(--safe-right)));
+    max-height: calc(100vh - var(--header-height) - 24px - var(--safe-bottom));
+    max-height: calc(100dvh - var(--header-height) - 24px - var(--safe-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.25s var(--ease);
+  }
+
+  .nav.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .nav__link {
+    min-height: 48px;
+    padding: 14px 12px;
+    font-size: 15px;
+  }
+
+  .nav__link::after {
+    display: none;
+  }
+
+  .nav__link.is-active {
+    border-radius: 10px;
+    background: var(--bg);
+  }
+
+  /* Без JavaScript меню остаётся доступным: раскрываем его в шапке */
+  .no-js .nav-toggle {
+    display: none;
+  }
+
+  .no-js .header__inner {
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    padding-block: 10px;
+  }
+
+  .no-js .nav {
+    position: static;
+    order: 3;
+    flex-basis: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 0 0 4px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  .no-js .nav__link {
+    min-height: 0;
+    padding: 4px 0;
   }
 }
 
@@ -1876,49 +2118,10 @@ img {
     display: none;
   }
 
-  .nav-toggle {
-    display: block;
-  }
-
   .nav {
-    position: fixed;
-    top: calc(var(--header-height) + 8px);
-    right: 16px;
-    left: 16px;
-    z-index: 75;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 10px;
-    border: 1px solid var(--line);
-    border-radius: 20px;
-    background: var(--surface);
-    box-shadow: var(--shadow-md);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px);
-    transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.25s var(--ease);
-  }
-
-  .nav.is-open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-
-  .nav__link {
-    padding: 14px 12px;
-    font-size: 15px;
-  }
-
-  .nav__link::after {
-    display: none;
-  }
-
-  .nav__link.is-active {
-    border-radius: 10px;
-    background: var(--bg);
+    right: max(16px, var(--safe-right));
+    left: max(16px, var(--safe-left));
+    width: auto;
   }
 
   .hero {
@@ -1989,8 +2192,8 @@ img {
 }
 
 @media (max-width: 640px) {
-  .container {
-    width: min(calc(100% - 36px), var(--container));
+  :root {
+    --gutter: 18px;
   }
 
   .section {
@@ -2161,6 +2364,328 @@ img {
   }
 }
 
+/* ==========================================================================
+   Устройства и способы ввода
+   ========================================================================== */
+
+/* Телефоны и планшеты в горизонтальной ориентации, низкие окна */
+@media (max-height: 560px) and (orientation: landscape) {
+  :root {
+    --header-height: calc(64px + var(--safe-top));
+  }
+
+  .hero {
+    padding: 26px 0 44px;
+  }
+
+  .hero h1 {
+    margin-top: 16px;
+    font-size: clamp(2.3rem, 5.4vw, 3.4rem);
+  }
+
+  .hero__lead {
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .hero__actions {
+    margin-top: 20px;
+  }
+
+  .hero__facts {
+    margin-top: 22px;
+    padding-top: 16px;
+  }
+
+  .hero__visual {
+    max-width: 320px;
+  }
+
+  .hero__seal {
+    width: 84px;
+    height: 84px;
+  }
+
+  .hero__note {
+    display: none;
+  }
+
+  .section:not(.section--tight) {
+    padding-block: 52px;
+  }
+
+  .nav {
+    max-height: calc(100vh - var(--header-height) - 20px - var(--safe-bottom));
+    max-height: calc(100dvh - var(--header-height) - 20px - var(--safe-bottom));
+  }
+}
+
+/* Небольшие телефоны и внешние экраны складных устройств */
+@media (max-width: 400px) {
+  :root {
+    --gutter: 14px;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.35rem, 11.5vw, 2.9rem);
+  }
+
+  .hero__lead {
+    font-size: 14.5px;
+  }
+
+  .hero__note--top {
+    top: 8%;
+    left: 6px;
+  }
+
+  .hero__note--bottom {
+    right: 6px;
+    bottom: 6%;
+  }
+
+  .hero__facts {
+    gap: 6px;
+  }
+
+  .hero__fact strong {
+    font-size: 1.35rem;
+  }
+
+  .hero__fact span {
+    font-size: 8.5px;
+    letter-spacing: 0.05em;
+  }
+
+  .button {
+    padding-inline: 18px;
+    font-size: 12px;
+  }
+
+  .chip {
+    padding: 8px 12px;
+    font-size: 10.5px;
+  }
+
+  .service-card {
+    min-height: 0;
+    padding: 17px;
+  }
+
+  .service-card__note {
+    max-width: 120px;
+  }
+
+  .manifesto {
+    padding: 22px 18px;
+  }
+
+  .contact-panel {
+    padding: 22px 16px;
+  }
+
+  .contact-row {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .footer__links {
+    gap: 0;
+  }
+}
+
+@media (max-width: 340px) {
+  .hero__note {
+    display: none;
+  }
+
+  .logo__mark {
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+  }
+}
+
+/* Сенсорный ввод: цели нажатия не меньше 44px, поля ввода без зума на iOS */
+@media (pointer: coarse) {
+  .button,
+  .contact-panel .button {
+    min-height: 52px;
+  }
+
+  .chip {
+    min-height: var(--tap);
+    padding: 11px 15px;
+  }
+
+  .price-search input {
+    height: 52px;
+    font-size: 16px;
+  }
+
+  .direction-card__link,
+  .contact-map-link {
+    align-items: center;
+    min-height: var(--tap);
+  }
+
+  .footer__links a,
+  .contact-row a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+  }
+
+  .header__phone {
+    min-height: var(--tap);
+  }
+
+  .faq-item summary {
+    min-height: 60px;
+  }
+
+  .skip-link {
+    padding: 13px 18px;
+  }
+}
+
+/* Устройства без наведения: убираем «залипшие» hover-эффекты */
+@media (hover: none) {
+  .button:hover {
+    background: var(--ink);
+    box-shadow: none;
+    transform: none;
+  }
+
+  .button--ghost:hover {
+    border-color: var(--line-strong);
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .button--light:hover {
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .button--ghost-light:hover {
+    border-color: rgba(255, 250, 244, 0.35);
+    background: transparent;
+    color: var(--surface);
+  }
+
+  .direction-card:hover {
+    border-color: var(--line);
+    background: rgba(255, 250, 244, 0.58);
+    box-shadow: none;
+    transform: none;
+  }
+
+  .direction-card:hover::after {
+    transform: none;
+  }
+
+  .service-card:hover {
+    border-color: var(--line);
+    background: var(--bg);
+    box-shadow: none;
+    transform: none;
+  }
+
+  .link-arrow:hover svg,
+  .direction-card__link:hover svg,
+  .contact-map-link:hover svg {
+    transform: none;
+  }
+
+  .nav__link:hover::after {
+    transform: scaleX(0);
+  }
+
+  .nav__link.is-active::after {
+    transform: scaleX(1);
+  }
+}
+
+/* Браузеры без поддержки backdrop-filter */
+@supports not ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
+  .site-header {
+    background: rgba(247, 241, 232, 0.98);
+  }
+
+  .hero__note {
+    background: var(--surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .site-header {
+    background: var(--bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .hero__note {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink-soft: #3d342d;
+    --muted: #5c5047;
+    --line: rgba(43, 37, 34, 0.32);
+    --line-strong: rgba(43, 37, 34, 0.56);
+  }
+
+  .contact-panel__lead {
+    color: rgba(255, 250, 244, 0.88);
+  }
+
+  .manifesto__list li {
+    color: rgba(255, 250, 244, 0.92);
+  }
+
+  .contact-hours {
+    color: rgba(255, 250, 244, 0.9);
+  }
+}
+
+@media (forced-colors: active) {
+  .site-header,
+  .direction-card,
+  .service-card,
+  .manifesto,
+  .contact-panel,
+  .nav,
+  .chip,
+  .price-search input,
+  .faq-item__icon {
+    border: 1px solid CanvasText;
+  }
+
+  .button {
+    border: 1px solid ButtonText;
+  }
+
+  .hero__arch::after,
+  .direction-card::after,
+  .manifesto::before,
+  .manifesto::after,
+  .contact-panel::before,
+  .contact-panel::after {
+    display: none;
+  }
+
+  :focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 3px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -2198,6 +2723,27 @@ img {
 
   body {
     background: #fff;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+
+  .direction-card,
+  .service-card,
+  .process-card,
+  .faq-item,
+  .feature {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .price-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero__visual {
+    display: none !important;
   }
 
   .contact-panel {
